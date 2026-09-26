@@ -350,7 +350,7 @@ void main()
 
         // Cor final do fragmento calculada com uma combinação dos termos difuso,
         // especular, e ambiente. Veja {+Phong+}.
-        color.rgb = direct_lighting + ambient_term;
+        color.rgb = direct_lighting + ambient_term;        
     }
 
     // Cor final com correção gamma, considerando monitor sRGB.

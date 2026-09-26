@@ -406,16 +406,12 @@ int main(int argc, char* argv[])
         #define RED_VELVET_SURFACE   4
         #define JADE_SURFACE         6
 
-        #define NUM_GREEN   25
-        #define NUM_YELLOW  14
-        #define NUM_BLUE    8
-
         // Desenhamos o modelo da esfera
-        // model = Matrix_Translate(-2.0f,0.0f,0.0f);
-        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        // glUniform1i(g_object_id_uniform, SPHERE);
-        // glUniform1i(g_surface_type_uniform, RED_VELVET_SURFACE);
-        // DrawVirtualObject("the_sphere");
+        model = Matrix_Translate(-2.0f,0.0f,0.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_surface_type_uniform, RED_VELVET_SURFACE);
+        DrawVirtualObject("the_sphere");
 
         // Desenhamos três coelhos com as cores verde, dourada e azul.
         const int bunny_surfaces[3] = {
@@ -423,160 +419,17 @@ int main(int argc, char* argv[])
             GOLD_SURFACE,
             BLUE_PLASTIC_SURFACE
         };
-        // for (int i = 0; i < 3; ++i)
-        // {
-        //     model = Matrix_Translate(2.0f * i,0.0f,0.0f);
-        //     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        //     glUniform1i(g_object_id_uniform, BUNNY);
-        //     glUniform1i(g_surface_type_uniform, bunny_surfaces[i]);
-        //     DrawVirtualObject("the_bunny");
-        // }
-
-// Parâmetros da animação do pulo e escala (Globais para ambos os grupos)
-        float speed = 1.5f;
-        float jumpFrequency = 1.0f;
-        float jumpHeight = 0.25f;
-        float rabbitScale = 0.3f;
-        float maxTilt = 0.35f;
-
-        float currentTime = (float)glfwGetTime();
-
-        // ------------------------------------------------------------------
-        // GRUPO 1: RETÂNGULO (VERDES)
-        // ------------------------------------------------------------------
-        float retWidth = 5.0f;
-        float retDepth = 3.5f;
-        float retPerimeter = 2.0f * (retWidth + retDepth);
-
-        // Loop para desenhar os verdes
-        for (int i = 0; i < NUM_GREEN; ++i)
+        for (int i = 0; i < 3; ++i)
         {
-            float retOffset = i * (retPerimeter / 25.0f); // O divisor deve ser igual ao NUM_GREEN
-            float distance = fmod((currentTime * speed) + retOffset, retPerimeter);
-
-            float x = 0.0f, z = 0.0f, yAngle = 0.0f;
-
-            // Mapeamento da distância linear para as 4 arestas (Sentido Horário)
-            if (distance < retDepth) {
-                x = -retWidth/2.0f;
-                z = retDepth/2.0f - distance;
-                yAngle = -3.141592f / 2.0f; 
-            } else if (distance < retWidth + retDepth) {
-                x = -retWidth/2.0f + (distance - retDepth);
-                z = -retDepth/2.0f;
-                yAngle = 3.141592f; 
-            } else if (distance < retWidth + 2.0f * retDepth) {
-                x = retWidth/2.0f;
-                z = -retDepth/2.0f + (distance - (retWidth + retDepth));
-                yAngle = 3.141592f / 2.0f; 
-            } else {
-                x = retWidth/2.0f - (distance - (retWidth + 2.0f * retDepth));
-                z = retDepth/2.0f;
-                yAngle = 0.0f; 
-            }
-
-            float y = 0.3f + abs(sin(distance * jumpFrequency)) * jumpHeight;
-            float zAngle = -maxTilt * sin(2.0f * distance * jumpFrequency);
-
-            model = Matrix_Translate(x, y, z) * Matrix_Rotate_Y(yAngle) * Matrix_Rotate_Z(zAngle) * Matrix_Scale(rabbitScale, rabbitScale, rabbitScale);
-
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            model = Matrix_Translate(2.0f * i,0.0f,0.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
-            glUniform1i(g_surface_type_uniform, JADE_SURFACE); 
-
-            DrawVirtualObject("the_bunny");
-        }
-
-
-        // ------------------------------------------------------------------
-        // GRUPO 2: LOSANGO (AMARELOS)
-        // ------------------------------------------------------------------
-        float diaWidth = 4.15f;
-        float diaDepth = 2.65f;
-
-        float diaEdge = sqrt(pow(diaWidth / 2.0f, 2) + pow(diaDepth / 2.0f, 2));
-        float diaPerimeter = 4.0f * diaEdge;
-
-        // Loop para desenhar os amarelos
-        for (int i = 0; i < NUM_YELLOW; ++i)
-        {
-            float diaOffset = i * (diaPerimeter / 14.0f); 
-            
-            float distance = fmod((currentTime * speed) + diaOffset, diaPerimeter);
-
-            float x = 0.0f, z = 0.0f, yAngle = 0.0f;
-
-            if (distance < diaDepth) {
-                x = -diaWidth/2.0f;
-                z = diaDepth/2.0f - distance;
-                yAngle = -3.141592f / 2.0f; 
-            } else if (distance < diaWidth + diaDepth) {
-                x = -diaWidth/2.0f + (distance - diaDepth);
-                z = -diaDepth/2.0f;
-                yAngle = 3.141592f; 
-            } else if (distance < diaWidth + 2.0f * diaDepth) {
-                x = diaWidth/2.0f;
-                z = -diaDepth/2.0f + (distance - (diaWidth + diaDepth));
-                yAngle = 3.141592f / 2.0f; 
-            } else {
-                x = diaWidth/2.0f - (distance - (diaWidth + 2.0f * diaDepth));
-                z = diaDepth/2.0f;
-                yAngle = 0.0f; 
-            }
-            
-            float y = 0.3f + abs(sin(distance * jumpFrequency)) * jumpHeight;
-            float zAngle = -maxTilt * sin(2.0f * distance * jumpFrequency);
-
-            model = Matrix_Translate(x, y, z) * Matrix_Rotate_Y(yAngle) * Matrix_Rotate_Z(zAngle) * Matrix_Scale(rabbitScale, rabbitScale, rabbitScale);
-
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BUNNY);
-            glUniform1i(g_surface_type_uniform, GOLD_SURFACE); 
-
-            DrawVirtualObject("the_bunny");
-        }
-
-        // ------------------------------------------------------------------
-        // GRUPO 3: CÍRCULO (AZUIS)
-        // ------------------------------------------------------------------
-        float circRadius = 0.875f;
-
-        // Loop para desenhar os azuis
-        for (int i = 0; i < NUM_BLUE; ++i)
-        {
-            // O offset distribui os coelhos uniformemente em 360 graus (2 * PI radianos)
-            float circOffset = i * (2.0f * 3.141592f / NUM_BLUE); 
-            
-            float circAngle = (currentTime * speed) + circOffset;
-
-            // Posição X e Z usando a equação paramétrica do círculo
-            float x = circRadius * cos(circAngle);
-            float z = circRadius * sin(circAngle);
-
-            // Orientação (Eixo Y) acompanhando a tangente do círculo
-            // Como o modelo do coelho aponta naturalmente para a esquerda (-X),
-            // a fórmula PI/2 - theta garante que ele olhe perfeitamente para a direção do movimento.
-            float yAngle = (3.141592f / 2.0f) - circAngle;
-
-            // Conversão de ângulo para distância linear (Arco da circunferência) para aproveitar a
-            // mesma lógica de pulo e inclinação dos outros grupos.
-            float distance = circAngle * circRadius;
-            
-            // Animação do pulo (Y) e inclinação (Z)
-            float y = 0.3f + abs(sin(distance * jumpFrequency)) * jumpHeight;
-            float zAngle = -maxTilt * sin(2.0f * distance * jumpFrequency);
-
-            model = Matrix_Translate(x, y, z) * Matrix_Rotate_Y(yAngle) * Matrix_Rotate_Z(zAngle) * Matrix_Scale(rabbitScale, rabbitScale, rabbitScale);
-
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BUNNY);
-            glUniform1i(g_surface_type_uniform, BLUE_PLASTIC_SURFACE); 
-
+            glUniform1i(g_surface_type_uniform, bunny_surfaces[i]);
             DrawVirtualObject("the_bunny");
         }
 
         // Desenhamos o plano do chão
-        model = Matrix_Translate(0.0f,0.0f,0.0f) * Matrix_Scale(4.0f,1.0f,4.0f);
+        model = Matrix_Translate(0.0f,-1.0f,0.0f) * Matrix_Scale(4.0f,1.0f,4.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
