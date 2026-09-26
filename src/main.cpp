@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - 00233700 - Pedro Fleck", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -410,29 +410,14 @@ int main(int argc, char* argv[])
         #define NUM_YELLOW  14
         #define NUM_BLUE    8
 
-        // Desenhamos o modelo da esfera
-        // model = Matrix_Translate(-2.0f,0.0f,0.0f);
-        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        // glUniform1i(g_object_id_uniform, SPHERE);
-        // glUniform1i(g_surface_type_uniform, RED_VELVET_SURFACE);
-        // DrawVirtualObject("the_sphere");
-
         // Desenhamos três coelhos com as cores verde, dourada e azul.
         const int bunny_surfaces[3] = {
             JADE_SURFACE,
             GOLD_SURFACE,
             BLUE_PLASTIC_SURFACE
         };
-        // for (int i = 0; i < 3; ++i)
-        // {
-        //     model = Matrix_Translate(2.0f * i,0.0f,0.0f);
-        //     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        //     glUniform1i(g_object_id_uniform, BUNNY);
-        //     glUniform1i(g_surface_type_uniform, bunny_surfaces[i]);
-        //     DrawVirtualObject("the_bunny");
-        // }
 
-// Parâmetros da animação do pulo e escala (Globais para ambos os grupos)
+        // Parâmetros da animação do pulo e escala (Globais para ambos os grupos)
         float speed = 1.5f;
         float jumpFrequency = 1.0f;
         float jumpHeight = 0.25f;
@@ -451,7 +436,7 @@ int main(int argc, char* argv[])
         // Loop para desenhar os verdes
         for (int i = 0; i < NUM_GREEN; ++i)
         {
-            float retOffset = i * (retPerimeter / 25.0f); // O divisor deve ser igual ao NUM_GREEN
+            float retOffset = i * (retPerimeter / (float)NUM_GREEN); // O divisor deve ser igual ao NUM_GREEN
             float distance = fmod((currentTime * speed) + retOffset, retPerimeter);
 
             float x = 0.0f, z = 0.0f, yAngle = 0.0f;
@@ -480,11 +465,25 @@ int main(int argc, char* argv[])
 
             model = Matrix_Translate(x, y, z) * Matrix_Rotate_Y(yAngle) * Matrix_Rotate_Z(zAngle) * Matrix_Scale(rabbitScale, rabbitScale, rabbitScale);
 
+            // Envia os dados para a GPU
             glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
             glUniform1i(g_surface_type_uniform, JADE_SURFACE); 
 
             DrawVirtualObject("the_bunny");
+
+            // --- DESENHO DO CHAPÉU ---
+            // 1. Herdamos a matriz 'model' do coelho (posição, pulo, inclinação e escala do coelho).
+            // 2. Transladamos a esfera para o topo da cabeça (espaço local do coelho).
+            // 3. Escalamos os eixos X e Z para a largura da aba, e achatamos o eixo Y para criar o elipsoide.
+            glm::mat4 model_chapeu = model * Matrix_Translate(-0.6f, 0.6f, 0.05f) * Matrix_Scale(0.35f, 0.15f, 0.35f);
+
+            // Envia os dados do chapéu para a GPU
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_chapeu));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            glUniform1i(g_surface_type_uniform, RED_VELVET_SURFACE); // Usa o material de veludo vermelho
+
+            DrawVirtualObject("the_sphere");
         }
 
 
@@ -497,31 +496,47 @@ int main(int argc, char* argv[])
         float diaEdge = sqrt(pow(diaWidth / 2.0f, 2) + pow(diaDepth / 2.0f, 2));
         float diaPerimeter = 4.0f * diaEdge;
 
+        // Pré-cálculo da rotação perfeita para cada aresta. 
+        // Usamos atan2(V_z, -V_x) porque o rosto nativo do coelho aponta para o -X
+        float edgeAngle1 = atan2(diaDepth / 2.0f, -diaWidth / 2.0f); // Fundo -> Direita
+        float edgeAngle2 = atan2(diaDepth / 2.0f, diaWidth / 2.0f);  // Direita -> Frente
+        float edgeAngle3 = atan2(-diaDepth / 2.0f, diaWidth / 2.0f); // Frente -> Esquerda
+        float edgeAngle4 = atan2(-diaDepth / 2.0f, -diaWidth / 2.0f);// Esquerda -> Fundo
+
         // Loop para desenhar os amarelos
         for (int i = 0; i < NUM_YELLOW; ++i)
         {
-            float diaOffset = i * (diaPerimeter / 14.0f); 
+            float diaOffset = i * (diaPerimeter / (float)NUM_YELLOW); 
             
             float distance = fmod((currentTime * speed) + diaOffset, diaPerimeter);
 
             float x = 0.0f, z = 0.0f, yAngle = 0.0f;
 
-            if (distance < diaDepth) {
-                x = -diaWidth/2.0f;
-                z = diaDepth/2.0f - distance;
-                yAngle = -3.141592f / 2.0f; 
-            } else if (distance < diaWidth + diaDepth) {
-                x = -diaWidth/2.0f + (distance - diaDepth);
-                z = -diaDepth/2.0f;
-                yAngle = 3.141592f; 
-            } else if (distance < diaWidth + 2.0f * diaDepth) {
-                x = diaWidth/2.0f;
-                z = -diaDepth/2.0f + (distance - (diaWidth + diaDepth));
-                yAngle = 3.141592f / 2.0f; 
+            // Mapeamento e Interpolação Linear pelas 4 arestas (Sentido Horário)
+            if (distance < diaEdge) {
+                // Aresta 1: Do fundo (0, -Z) para a Direita (+X, 0)
+                float t = distance / diaEdge; // Progresso de 0.0 a 1.0 nesta aresta
+                x = t * (diaWidth / 2.0f);
+                z = -diaDepth / 2.0f + t * (diaDepth / 2.0f);
+                yAngle = edgeAngle1;
+            } else if (distance < 2.0f * diaEdge) {
+                // Aresta 2: Da Direita (+X, 0) para a Frente (0, +Z)
+                float t = (distance - diaEdge) / diaEdge;
+                x = diaWidth / 2.0f - t * (diaWidth / 2.0f);
+                z = t * (diaDepth / 2.0f);
+                yAngle = edgeAngle2;
+            } else if (distance < 3.0f * diaEdge) {
+                // Aresta 3: Da Frente (0, +Z) para a Esquerda (-X, 0)
+                float t = (distance - 2.0f * diaEdge) / diaEdge;
+                x = -t * (diaWidth / 2.0f);
+                z = diaDepth / 2.0f - t * (diaDepth / 2.0f);
+                yAngle = edgeAngle3;
             } else {
-                x = diaWidth/2.0f - (distance - (diaWidth + 2.0f * diaDepth));
-                z = diaDepth/2.0f;
-                yAngle = 0.0f; 
+                // Aresta 4: Da Esquerda (-X, 0) para o Fundo (0, -Z)
+                float t = (distance - 3.0f * diaEdge) / diaEdge;
+                x = -diaWidth / 2.0f + t * (diaWidth / 2.0f);
+                z = -t * (diaDepth / 2.0f);
+                yAngle = edgeAngle4;
             }
             
             float y = 0.3f + abs(sin(distance * jumpFrequency)) * jumpHeight;
@@ -529,11 +544,21 @@ int main(int argc, char* argv[])
 
             model = Matrix_Translate(x, y, z) * Matrix_Rotate_Y(yAngle) * Matrix_Rotate_Z(zAngle) * Matrix_Scale(rabbitScale, rabbitScale, rabbitScale);
 
+            // Envia os dados para a GPU
             glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
             glUniform1i(g_surface_type_uniform, GOLD_SURFACE); 
 
             DrawVirtualObject("the_bunny");
+
+            glm::mat4 model_chapeu = model * Matrix_Translate(-0.6f, 0.6f, 0.05f) * Matrix_Scale(0.35f, 0.15f, 0.35f);
+
+            // Envia os dados do chapéu para a GPU
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_chapeu));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            glUniform1i(g_surface_type_uniform, RED_VELVET_SURFACE); // Usa o material de veludo vermelho
+
+            DrawVirtualObject("the_sphere");
         }
 
         // ------------------------------------------------------------------
@@ -545,7 +570,7 @@ int main(int argc, char* argv[])
         for (int i = 0; i < NUM_BLUE; ++i)
         {
             // O offset distribui os coelhos uniformemente em 360 graus (2 * PI radianos)
-            float circOffset = i * (2.0f * 3.141592f / NUM_BLUE); 
+            float circOffset = i * (2.0f * 3.141592f / (float)NUM_BLUE); 
             
             float circAngle = (currentTime * speed) + circOffset;
 
@@ -568,14 +593,25 @@ int main(int argc, char* argv[])
 
             model = Matrix_Translate(x, y, z) * Matrix_Rotate_Y(yAngle) * Matrix_Rotate_Z(zAngle) * Matrix_Scale(rabbitScale, rabbitScale, rabbitScale);
 
+            // Envia os dados para a GPU
             glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
             glUniform1i(g_surface_type_uniform, BLUE_PLASTIC_SURFACE); 
 
             DrawVirtualObject("the_bunny");
+
+            glm::mat4 model_chapeu = model * Matrix_Translate(-0.6f, 0.6f, 0.05f) * Matrix_Scale(0.35f, 0.15f, 0.35f);
+
+            // Envia os dados do chapéu para a GPU
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_chapeu));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            glUniform1i(g_surface_type_uniform, RED_VELVET_SURFACE); // Usa o material de veludo vermelho
+
+            DrawVirtualObject("the_sphere");
         }
 
         // Desenhamos o plano do chão
+        // Envia os dados para a GPU
         model = Matrix_Translate(0.0f,0.0f,0.0f) * Matrix_Scale(4.0f,1.0f,4.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
@@ -1644,6 +1680,3 @@ void PrintObjModelInfo(ObjModel* model)
     printf("\n");
   }
 }
-
-// set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
-// vim: set spell spelllang=pt_br :
